@@ -147,11 +147,11 @@ function CurrentGame({name, handleAbandonClick}) {
       <Pet hunger={hunger} thirst={thirst} love={love} />
 
       <div className="actions_container">
-        <Action label="Feed" handleClick={handleFeedClick} />
-        <Action label="Water" handleClick={handleWaterClick} />
-        <Action label="Pet" handleClick={handlePetClick} />
-        <Action label="Abandon" handleClick={handleAbandonClick} />
-        <Action label="Reset" handleClick={handleResetClick} />
+        <DisableableAction label="Feed" handleClick={handleFeedClick} hunger={hunger} thirst={thirst} love={love} />
+        <DisableableAction label="Water" handleClick={handleWaterClick} hunger={hunger} thirst={thirst} love={love} />
+        <DisableableAction label="Pet" handleClick={handlePetClick} hunger={hunger} thirst={thirst} love={love} />
+        <Action label="Reset" handleClick={handleResetClick} hunger={hunger} thirst={thirst} love={love} />
+        <Action label="Abandon" handleClick={handleAbandonClick} hunger={hunger} thirst={thirst} love={love} />
       </div>
     </div>
   );
@@ -161,7 +161,13 @@ function Pet({hunger, thirst, love}) {
   let appearance = "";
 
   // Use the pet's needs to decide the depiction
-  if (hunger > 7 || thirst > 7 || love < 3) {
+  if (hunger == 10 || thirst == 10) {
+    appearance = "[DIED]";
+  }
+  else if (love == 0) {
+    appearance = "[LEFT]";
+  }
+  else if (hunger > 7 || thirst > 7 || love < 3) {
     appearance = "T_T";
   }
   else if (hunger > 4 || thirst > 4 || love < 7) {
@@ -188,5 +194,13 @@ function Status({label, value}) {
 function Action({label, handleClick}) {
   return (
     <button onClick={handleClick}>{label}</button>
+  );
+}
+
+function DisableableAction({label, handleClick, hunger, thirst, love}) {
+  let isAlive = (hunger < 10) && (thirst < 10) && (love > 0);
+
+  return (
+    <button disabled={!isAlive} onClick={handleClick}>{label}</button>
   );
 }
