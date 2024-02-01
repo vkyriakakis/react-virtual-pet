@@ -3,12 +3,78 @@ import "./App.css";
 import { useState, useEffect } from 'react';
 
 export default function App() {
+  const [name, setName] = useState(localStorage.getItem("name"));
+
+  function handleNameSubmit(newName) {
+    setName(newName);
+    localStorage.setItem("name", newName);
+  }
+
+  function handleAbandonClick() {
+    setName(null);
+    localStorage.clear();
+  }
+
+  // If the name is null, a saved game doesn't exist and
+  // the name insertion form should be shown
+  if (name === null) {
+    return (
+      <>
+        <Title />
+        <NameInsertionForm handleSubmit={handleNameSubmit} />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Title />
+      <CurrentGame name={name} handleAbandonClick={handleAbandonClick} />
+    </>
+  );
+}
+
+function Title() {
+  return (
+    <>
+      <h1>My Virtual Pet</h1>
+    </>
+  );
+}
+
+function Name({name}) {
+  return (
+    <>
+      <h2>{name}</h2>
+    </>
+  );
+}
+
+function NameInsertionForm({handleSubmit}) {
+  return (
+    <div className="vpet_container">
+      <form onSubmit={event => handleSubmit(event.target.elements.petName.value)}>
+        <label>First name:</label>
+        <input type="text" id="petName"/>
+        <br />
+        <input type="submit" defaultValue="Submit" />
+      </form>
+    </div>
+  );
+}
+
+function parseIntWithoutNaN(str, defaultNum) {
+  const num = parseInt(str);
+  return isNaN(num) ? defaultNum : num;
+}
+
+function CurrentGame({name, handleAbandonClick}) {
   // For the first render, check the local storage for previous values,
   // and load them if they exist
-  const [hunger, setHunger] = useState(parseInt(localStorage.getItem("hunger")));
-  const [thirst, setThirst] = useState(parseInt(localStorage.getItem("thirst")));
-  const [love, setLove] = useState(parseInt(localStorage.getItem("love")));
-  const [ticks, setTicks] = useState(parseInt(localStorage.getItem("ticks")));
+  const [hunger, setHunger] = useState(parseIntWithoutNaN(localStorage.getItem("hunger"), 0));
+  const [thirst, setThirst] = useState(parseIntWithoutNaN(localStorage.getItem("thirst"), 0));
+  const [love, setLove] = useState(parseIntWithoutNaN(localStorage.getItem("love"), 10));
+  const [ticks, setTicks] = useState(parseIntWithoutNaN(localStorage.getItem("ticks"), 0));
 
   // Refresh the timeout everytime a timeout expires using
   // the ticks dependency
@@ -69,6 +135,8 @@ export default function App() {
 
   return (
     <div className="vpet_container">
+      <Name name={name} />
+
       <div className="status_container">
         <Status label="Hunger" value={hunger} />
         <Status label="Thirst" value={thirst} />
@@ -82,6 +150,7 @@ export default function App() {
         <Action label="Feed" handleClick={handleFeedClick} />
         <Action label="Water" handleClick={handleWaterClick} />
         <Action label="Pet" handleClick={handlePetClick} />
+        <Action label="Abandon" handleClick={handleAbandonClick} />
         <Action label="Reset" handleClick={handleResetClick} />
       </div>
     </div>
