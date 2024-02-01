@@ -3,10 +3,12 @@ import "./App.css";
 import { useState, useEffect } from 'react';
 
 export default function App() {
-  const [hunger, setHunger] = useState(0);
-  const [thirst, setThirst] = useState(0);
-  const [love, setLove] = useState(10);
-  const [ticks, setTicks] = useState(0);
+  // For the first render, check the local storage for previous values,
+  // and load them if they exist
+  const [hunger, setHunger] = useState(parseInt(localStorage.getItem("hunger")));
+  const [thirst, setThirst] = useState(parseInt(localStorage.getItem("thirst")));
+  const [love, setLove] = useState(parseInt(localStorage.getItem("love")));
+  const [ticks, setTicks] = useState(parseInt(localStorage.getItem("ticks")));
 
   // Refresh the timeout everytime a timeout expires using
   // the ticks dependency
@@ -27,6 +29,23 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [ticks]);
 
+  // Store to local storage after every re-render (change in the pet's state)
+  useEffect(() => {
+      localStorage.setItem("hunger", hunger);
+  }, [hunger]);
+
+  useEffect(() => {
+      localStorage.setItem("thirst", thirst);
+  }, [thirst]);
+
+  useEffect(() => {
+      localStorage.setItem("love", love);
+  }, [love]);
+
+  useEffect(() => {
+      localStorage.setItem("ticks", ticks);
+  }, [ticks]);
+
   // Click handlers
   function handleFeedClick() {
     setHunger(hunger => (hunger > 0) ? hunger - 1 : hunger);
@@ -38,6 +57,14 @@ export default function App() {
 
   function handlePetClick() {
     setLove(love => (love < 10) ? love + 1 : love);
+  }
+
+  // For debugging
+  function handleResetClick() {
+    setHunger(0);
+    setThirst(0);
+    setLove(10);
+    setTicks(0);
   }
 
   return (
@@ -55,6 +82,7 @@ export default function App() {
         <Action label="Feed" handleClick={handleFeedClick} />
         <Action label="Water" handleClick={handleWaterClick} />
         <Action label="Pet" handleClick={handlePetClick} />
+        <Action label="Reset" handleClick={handleResetClick} />
       </div>
     </div>
   );
