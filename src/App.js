@@ -3,21 +3,22 @@ import "./App.css";
 import { useState, useEffect } from 'react';
 
 export default function App() {
-  const [name, setName] = useState(localStorage.getItem("name"));
+  const [curName, setCurName] = useState(localStorage.getItem("curName"));
 
   function handleNameSubmit(newName) {
-    setName(newName);
-    localStorage.setItem("name", newName);
+    setCurName(newName);
+    localStorage.setItem("curName", newName);
   }
 
   function handleAbandonClick() {
-    setName(null);
-    localStorage.clear();
+    setCurName(null);
+    localStorage.setItem("curName", null);
+    localStorage.removeItem(curName);
   }
 
   // If the name is null, a saved game doesn't exist and
   // the name insertion form should be shown
-  if (name === null) {
+  if (curName === null) {
     return (
       <>
         <Title />
@@ -29,7 +30,7 @@ export default function App() {
   return (
     <>
       <Title />
-      <CurrentGame name={name} handleAbandonClick={handleAbandonClick} />
+      <CurrentGame name={curName} handleAbandonClick={handleAbandonClick} />
     </>
   );
 }
@@ -63,74 +64,102 @@ function NameInsertionForm({handleSubmit}) {
   );
 }
 
-function parseIntWithoutNaN(str, defaultNum) {
+/*function parseIntWithoutNaN(str, defaultNum) {
   const num = parseInt(str);
   return isNaN(num) ? defaultNum : num;
+}
+*/
+
+function parsePetOrDefault(petJson) {
+  console.log(petJson);
+
+  let pet = JSON.parse(petJson);
+
+  if (pet === null) {
+    return ({
+      ticks: 0,
+      thirst: 0,
+      hunger: 0,
+      love: 10
+    });
+  }
+
+  return pet;
+}
+
+function checkIsAlive(pet) {
+  return (pet.hunger < 10) && (pet.thirst < 10) && (pet.love > 0);
 }
 
 function CurrentGame({name, handleAbandonClick}) {
   // For the first render, check the local storage for previous values,
   // and load them if they exist
-  const [hunger, setHunger] = useState(parseIntWithoutNaN(localStorage.getItem("hunger"), 0));
-  const [thirst, setThirst] = useState(parseIntWithoutNaN(localStorage.getItem("thirst"), 0));
-  const [love, setLove] = useState(parseIntWithoutNaN(localStorage.getItem("love"), 10));
-  const [ticks, setTicks] = useState(parseIntWithoutNaN(localStorage.getItem("ticks"), 0));
+  const [pet, setPet] = useState(parsePetOrDefault(localStorage.getItem(name)));
 
   // Refresh the timeout everytime a timeout expires using
-  // the ticks dependency
+  // the ticks dependency. If the pet has died or left,
+  // time stops
   useEffect(() => {
-    let timer = setTimeout(() => {
-      setTicks(ticks => ticks + 1);
-      setThirst(thirst => (thirst < 10) ? thirst + 1 : thirst);
+    if (checkIsAlive(pet)) {
+      let timer = setTimeout(() => {
+        let shouldUpdateHunger = false;
+        let shouldUpdateLove = false;
 
-      if ((ticks + 1) % 2 == 0) {
-        setHunger(hunger => (hunger < 10) ? hunger + 1 : hunger);
-      }
+        if ((pet.ticks + 1) % 2 == 0) {
+          shouldUpdateHunger = true;
+        }
 
-      if ((ticks + 1) % 3 == 0) {
-        setLove(love => (love > 0) ? love - 1 : love);
-      }
-    }, 10000);
+        if ((pet.ticks + 1) % 3 == 0) {
+          shouldUpdateLove = true;
+        }
 
-    return () => clearTimeout(timer);
-  }, [ticks]);
+        setPet(prevPet => ({
+          ticks: prevPet.ticks + 1,
+          thirst: (prevPet.thirst < 10) ? prevPet.thirst + 1 : prevPet.thirst,
+          hunger: (shouldUpdateHunger && (prevPet.hunger < 10)) ? prevPet.hunger + 1 : prevPet.hunger,
+          love: (shouldUpdateLove && (prevPet.love > 0)) ? prevPet.love - 1 : prevPet.love
+        }));
+      }, 10000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [pet.ticks]);
 
   // Store to local storage after every re-render (change in the pet's state)
   useEffect(() => {
-      localStorage.setItem("hunger", hunger);
-  }, [hunger]);
-
-  useEffect(() => {
-      localStorage.setItem("thirst", thirst);
-  }, [thirst]);
-
-  useEffect(() => {
-      localStorage.setItem("love", love);
-  }, [love]);
-
-  useEffect(() => {
-      localStorage.setItem("ticks", ticks);
-  }, [ticks]);
+      localStorage.setItem(name, JSON.stringify(pet));
+  });
 
   // Click handlers
   function handleFeedClick() {
-    setHunger(hunger => (hunger > 0) ? hunger - 1 : hunger);
+    setPet(prevPet => ({
+      ...prevPet,
+      hunger: (prevPet.hunger > 0) ? prevPet.hunger - 1 : prevPet.hunger
+    }));
   }
 
   function handleWaterClick() {
-    setThirst(thirst => (thirst > 0) ? thirst - 1 : thirst);
+    setPet(prevPet => ({
+      ...prevPet,
+      thirst: (prevPet.thirst > 0) ? prevPet.thirst - 1 : prevPet.thirst
+    }));
   }
 
   function handlePetClick() {
-    setLove(love => (love < 10) ? love + 1 : love);
+    setPet(prevPet => ({
+      ...prevPet,
+      love: (prevPet.love < 10) ? prevPet.love + 1 : prevPet.love
+    }));
   }
 
   // For debugging
   function handleResetClick() {
-    setHunger(0);
-    setThirst(0);
-    setLove(10);
-    setTicks(0);
+    setPet(prevPet => ({
+      ticks: 0,
+      thirst: 0,
+      hunger: 0,
+      love: 10
+    }));
   }
 
   return (
@@ -138,42 +167,42 @@ function CurrentGame({name, handleAbandonClick}) {
       <Name name={name} />
 
       <div className="status_container">
-        <Status label="Hunger" value={hunger} />
-        <Status label="Thirst" value={thirst} />
-        <Status label="Love" value={love} />
-        <Status label="Age" value={ticks} />
+        <Status label="Hunger" value={pet.hunger} />
+        <Status label="Thirst" value={pet.thirst} />
+        <Status label="Love" value={pet.love} />
+        <Status label="Age" value={pet.ticks} />
       </div>
 
-      <Pet hunger={hunger} thirst={thirst} love={love} />
+      <Pet pet={pet} />
 
       <div className="actions_container">
-        <DisableableAction label="Feed" handleClick={handleFeedClick} hunger={hunger} thirst={thirst} love={love} />
-        <DisableableAction label="Water" handleClick={handleWaterClick} hunger={hunger} thirst={thirst} love={love} />
-        <DisableableAction label="Pet" handleClick={handlePetClick} hunger={hunger} thirst={thirst} love={love} />
-        <Action label="Reset" handleClick={handleResetClick} hunger={hunger} thirst={thirst} love={love} />
-        <Action label="Abandon" handleClick={handleAbandonClick} hunger={hunger} thirst={thirst} love={love} />
+        <DisableableAction label="Feed" handleClick={handleFeedClick} pet={pet} />
+        <DisableableAction label="Water" handleClick={handleWaterClick} pet={pet} />
+        <DisableableAction label="Pet" handleClick={handlePetClick} pet={pet} />
+        <Action label="Reset" handleClick={handleResetClick} pet={pet} />
+        <Action label="Abandon" handleClick={handleAbandonClick} pet={pet} />
       </div>
     </div>
   );
 }
 
-function Pet({hunger, thirst, love}) {
+function Pet({pet}) {
   let appearance = "";
 
   // Use the pet's needs to decide the depiction
-  if (hunger == 10 || thirst == 10) {
+  if (pet.hunger == 10 || pet.thirst == 10) {
     appearance = "[DIED]";
   }
-  else if (love == 0) {
+  else if (pet.love == 0) {
     appearance = "[LEFT]";
   }
-  else if (hunger > 7 || thirst > 7 || love < 3) {
+  else if (pet.hunger > 7 || pet.thirst > 7 || pet.love < 3) {
     appearance = "T_T";
   }
-  else if (hunger > 4 || thirst > 4 || love < 7) {
+  else if (pet.hunger > 4 || pet.thirst > 4 || pet.love < 7) {
     appearance = "-_-";
   }
-  else if (hunger > 2 || thirst > 2 || love < 8) {
+  else if (pet.hunger > 2 || pet.thirst > 2 || pet.love < 8) {
     appearance = "o_o";
   }
   else {
@@ -197,10 +226,8 @@ function Action({label, handleClick}) {
   );
 }
 
-function DisableableAction({label, handleClick, hunger, thirst, love}) {
-  let isAlive = (hunger < 10) && (thirst < 10) && (love > 0);
-
+function DisableableAction({label, handleClick, pet}) {
   return (
-    <button disabled={!isAlive} onClick={handleClick}>{label}</button>
+    <button disabled={!checkIsAlive(pet)} onClick={handleClick}>{label}</button>
   );
 }
