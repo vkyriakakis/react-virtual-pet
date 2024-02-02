@@ -2,6 +2,20 @@ import logo from './logo.svg';
 import "./App.css";
 import { useState, useEffect } from 'react';
 
+// If hunger and thrist reach the maximum, the pet dies
+const MAX_HUNGER = 10;
+const MAX_LOVE = 10;
+const MAX_THIRST = 10;
+
+// The *_INTERVAL constants concern the rate
+// at which each stat increases as time passes
+const THIRST_INTERVAL = 1;
+const HUNGER_INTERVAL = 2;
+const LOVE_INTERVAL = 3;
+
+// These values concern the number of ticks that must pass for the
+// next growth stage to occur
+
 export default function App() {
   const [curName, setCurName] = useState(localStorage.getItem("curName"));
 
@@ -71,24 +85,20 @@ function NameInsertionForm({handleSubmit}) {
 */
 
 function parsePetOrDefault(petJson) {
-  console.log(petJson);
-
-  let pet = JSON.parse(petJson);
-
-  if (pet === null) {
+  if (petJson === null) {
     return ({
       ticks: 0,
       thirst: 0,
       hunger: 0,
-      love: 10
+      love: MAX_LOVE
     });
   }
 
-  return pet;
+  return JSON.parse(petJson);
 }
 
 function checkIsAlive(pet) {
-  return (pet.hunger < 10) && (pet.thirst < 10) && (pet.love > 0);
+  return (pet.hunger < MAX_HUNGER) && (pet.thirst < MAX_THIRST) && (pet.love > 0);
 }
 
 function CurrentGame({name, handleAbandonClick}) {
@@ -102,21 +112,26 @@ function CurrentGame({name, handleAbandonClick}) {
   useEffect(() => {
     if (checkIsAlive(pet)) {
       let timer = setTimeout(() => {
+        let shouldUpdateThirst = false;
         let shouldUpdateHunger = false;
         let shouldUpdateLove = false;
 
-        if ((pet.ticks + 1) % 2 == 0) {
+        if ((pet.ticks + 1) % THIRST_INTERVAL == 0) {
+          shouldUpdateThirst = true;
+        }        
+
+        if ((pet.ticks + 1) % HUNGER_INTERVAL == 0) {
           shouldUpdateHunger = true;
         }
 
-        if ((pet.ticks + 1) % 3 == 0) {
+        if ((pet.ticks + 1) % LOVE_INTERVAL == 0) {
           shouldUpdateLove = true;
         }
 
         setPet(prevPet => ({
           ticks: prevPet.ticks + 1,
-          thirst: (prevPet.thirst < 10) ? prevPet.thirst + 1 : prevPet.thirst,
-          hunger: (shouldUpdateHunger && (prevPet.hunger < 10)) ? prevPet.hunger + 1 : prevPet.hunger,
+          thirst: (shouldUpdateThirst && (prevPet.thirst < MAX_THIRST)) ? prevPet.thirst + 1 : prevPet.thirst,
+          hunger: (shouldUpdateHunger && (prevPet.hunger < MAX_HUNGER)) ? prevPet.hunger + 1 : prevPet.hunger,
           love: (shouldUpdateLove && (prevPet.love > 0)) ? prevPet.love - 1 : prevPet.love
         }));
       }, 10000);
@@ -187,22 +202,34 @@ function CurrentGame({name, handleAbandonClick}) {
 }
 
 function Pet({pet}) {
+  const HIGH_HUNGER = 7;
+  const HIGH_THIRST = 7;
+  const HIGH_LOVE = 8;
+
+  const MID_HUNGER = 4;
+  const MID_THIRST = 4;
+  const MID_LOVE = 6;
+
+  const LOW_HUNGER = 2;
+  const LOW_THIRST = 2;
+  const LOW_LOVE = 3;
+
   let appearance = "";
 
   // Use the pet's needs to decide the depiction
-  if (pet.hunger == 10 || pet.thirst == 10) {
+  if (pet.hunger == MAX_HUNGER || pet.thirst == MAX_THIRST) {
     appearance = "[DIED]";
   }
   else if (pet.love == 0) {
     appearance = "[LEFT]";
   }
-  else if (pet.hunger > 7 || pet.thirst > 7 || pet.love < 3) {
+  else if (pet.hunger > HIGH_HUNGER || pet.thirst > HIGH_THIRST || pet.love < LOW_LOVE) {
     appearance = "T_T";
   }
-  else if (pet.hunger > 4 || pet.thirst > 4 || pet.love < 7) {
+  else if (pet.hunger > MID_HUNGER || pet.thirst > MID_THIRST || pet.love < MID_LOVE) {
     appearance = "-_-";
   }
-  else if (pet.hunger > 2 || pet.thirst > 2 || pet.love < 8) {
+  else if (pet.hunger > LOW_HUNGER || pet.thirst > LOW_THIRST || pet.love < HIGH_LOVE) {
     appearance = "o_o";
   }
   else {
