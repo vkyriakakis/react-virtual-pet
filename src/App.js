@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 const MAX_HUNGER = 10;
 const MAX_LOVE = 10;
 const MAX_THIRST = 10;
+const MAX_COLOR = 255;
 
 // The *_INTERVAL constants concern the rate
 // at which each stat increases as time passes
@@ -14,7 +15,8 @@ const HUNGER_INTERVAL = 2;
 const LOVE_INTERVAL = 3;
 
 // These values concern the number of ticks that must pass for the
-// next growth stage to occur
+// child growth stage to occur
+const MAX_EGG_TICKS = 5;
 
 export default function App() {
   const [curName, setCurName] = useState(localStorage.getItem("curName"));
@@ -90,7 +92,10 @@ function parsePetOrDefault(petJson) {
       ticks: 0,
       thirst: 0,
       hunger: 0,
-      love: MAX_LOVE
+      love: MAX_LOVE,
+      red: 0,
+      green: 0,
+      blue: 0
     });
   }
 
@@ -112,28 +117,40 @@ function CurrentGame({name, handleAbandonClick}) {
   useEffect(() => {
     if (checkIsAlive(pet)) {
       let timer = setTimeout(() => {
-        let shouldUpdateThirst = false;
-        let shouldUpdateHunger = false;
-        let shouldUpdateLove = false;
+        // For the CHILD stage and beyond the thirst and hunger stats are introduced, and
+        // love drops less frequently
+        if (pet.ticks >= MAX_EGG_TICKS) {
+          let shouldUpdateThirst = false;
+          let shouldUpdateHunger = false;
+          let shouldUpdateLove = false;
 
-        if ((pet.ticks + 1) % THIRST_INTERVAL == 0) {
-          shouldUpdateThirst = true;
-        }        
+          if ((pet.ticks + 1) % THIRST_INTERVAL == 0) {
+            shouldUpdateThirst = true;
+          }        
 
-        if ((pet.ticks + 1) % HUNGER_INTERVAL == 0) {
-          shouldUpdateHunger = true;
+          if ((pet.ticks + 1) % HUNGER_INTERVAL == 0) {
+            shouldUpdateHunger = true;
+          }
+
+          if ((pet.ticks + 1) % LOVE_INTERVAL == 0) {
+            shouldUpdateLove = true;
+          }
+
+          setPet(prevPet => ({
+            ticks: prevPet.ticks + 1,
+            thirst: (shouldUpdateThirst && (prevPet.thirst < MAX_THIRST)) ? prevPet.thirst + 1 : prevPet.thirst,
+            hunger: (shouldUpdateHunger && (prevPet.hunger < MAX_HUNGER)) ? prevPet.hunger + 1 : prevPet.hunger,
+            love: (shouldUpdateLove && (prevPet.love > 0)) ? prevPet.love - 1 : prevPet.love
+          }));
         }
-
-        if ((pet.ticks + 1) % LOVE_INTERVAL == 0) {
-          shouldUpdateLove = true;
+        // For the EGG stage always lower the love
+        else {
+          setPet(prevPet => ({
+            ...prevPet,
+            ticks: prevPet.ticks + 1,
+            love: (prevPet.love > 0) ? prevPet.love - 1 : prevPet.love
+          }));
         }
-
-        setPet(prevPet => ({
-          ticks: prevPet.ticks + 1,
-          thirst: (shouldUpdateThirst && (prevPet.thirst < MAX_THIRST)) ? prevPet.thirst + 1 : prevPet.thirst,
-          hunger: (shouldUpdateHunger && (prevPet.hunger < MAX_HUNGER)) ? prevPet.hunger + 1 : prevPet.hunger,
-          love: (shouldUpdateLove && (prevPet.love > 0)) ? prevPet.love - 1 : prevPet.love
-        }));
       }, 10000);
 
       return () => clearTimeout(timer);
@@ -167,16 +184,68 @@ function CurrentGame({name, handleAbandonClick}) {
     }));
   }
 
+  function handleHeatClick() {
+    setPet(prevPet => ({
+      ...prevPet,
+      love: (prevPet.love < 10) ? prevPet.love + 1 : prevPet.love,
+      red: (prevPet.red < MAX_COLOR) ? prevPet.red + 30 : prevPet.red
+    }));
+  }
+
+  function handleColdClick() {
+    setPet(prevPet => ({
+      ...prevPet,
+      love: (prevPet.love < 10) ? prevPet.love + 1 : prevPet.love,
+      blue: (prevPet.blue < MAX_COLOR) ? prevPet.blue + 30 : prevPet.blue
+    }));
+  }
+
+  function handleLifeClick() {
+    setPet(prevPet => ({
+      ...prevPet,
+      love: (prevPet.love < 10) ? prevPet.love + 1 : prevPet.love,
+      green: (prevPet.green < MAX_COLOR) ? prevPet.green + 30 : prevPet.green
+    }));
+  }
+
   // For debugging
   function handleResetClick() {
     setPet(prevPet => ({
       ticks: 0,
       thirst: 0,
       hunger: 0,
-      love: 10
+      love: 10,
+      red: 0,
+      green: 0,
+      blue: 0
     }));
   }
 
+  // For the EGG stage
+  if (pet.ticks < MAX_EGG_TICKS) {
+    return (
+      <div className="vpet_container">
+        <Name name={name} />
+
+        <div className="status_container">
+          <Status label="Love" value={pet.love} />
+          <Status label="Age" value={pet.ticks} />
+        </div>
+
+        <Pet pet={pet} />
+
+        <div className="actions_container">
+          <DisableableAction label="Heat" handleClick={handleHeatClick} pet={pet} />
+          <DisableableAction label="Cold" handleClick={handleColdClick} pet={pet} />
+          <DisableableAction label="Life" handleClick={handleLifeClick} pet={pet} />
+          <Action label="Reset" handleClick={handleResetClick} pet={pet} />
+          <Action label="Abandon" handleClick={handleAbandonClick} pet={pet} />
+        </div>
+      </div>
+    );
+  }
+
+  // For the CHILD stage and beyond
   return (
     <div className="vpet_container">
       <Name name={name} />
@@ -217,11 +286,11 @@ function Pet({pet}) {
   let appearance = "";
 
   // Use the pet's needs to decide the depiction
-  if (pet.hunger == MAX_HUNGER || pet.thirst == MAX_THIRST) {
+  if (pet.hunger == MAX_HUNGER || pet.thirst == MAX_THIRST || pet.love == 0) {
     appearance = "[DIED]";
   }
-  else if (pet.love == 0) {
-    appearance = "[LEFT]";
+  else if (pet.ticks < MAX_EGG_TICKS) {
+    appearance = "(0)";
   }
   else if (pet.hunger > HIGH_HUNGER || pet.thirst > HIGH_THIRST || pet.love < LOW_LOVE) {
     appearance = "T_T";
@@ -236,8 +305,10 @@ function Pet({pet}) {
     appearance = "^_^";
   }
 
+  const colorStr = "rgb(" + pet.red + "," + pet.green + "," + pet.blue + ")";
+
   return (
-    <h1>{appearance}</h1>
+    <h1 style={{color: colorStr}}>{appearance}</h1>
   );
 }
 
