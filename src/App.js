@@ -19,14 +19,14 @@ const LOVE_INTERVAL = 3;
 
 // These values concern the number of ticks that must pass for the
 // baby growth stage to occur
-const MAX_EGG_TICKS = 5;
+const MAX_EGG_TICKS = 10;
 
 // Same but for the child growth stage (the ticks are counted from t = 0)
-const MAX_BABY_TICKS = 10;
+const MAX_BABY_TICKS = 20;
 
 // And for the rest of the stages
-const MAX_CHILD_TICKS = 20;
-const MAX_TEEN_TICKS = 35;
+const MAX_CHILD_TICKS = 35;
+const MAX_TEEN_TICKS = 55;
 
 export default function App() {
   const [curName, setCurName] = useState(localStorage.getItem("curName"));
@@ -84,7 +84,7 @@ function NameInsertionForm({handleSubmit}) {
         <label>First name:</label>
         <input type="text" id="petName"/>
         <br />
-        <input type="submit" defaultValue="Submit" />
+        <input type="submit" value="Submit" />
       </form>
     </div>
   );
@@ -306,11 +306,11 @@ function CurrentGame({name, handleAbandonClick}) {
         <Pet pet={pet} />
 
         <div className="actions_container">
-          <DisableableAction label="Heat" handleClick={handleHeatClick} pet={pet} />
-          <DisableableAction label="Cold" handleClick={handleColdClick} pet={pet} />
-          <DisableableAction label="Life" handleClick={handleLifeClick} pet={pet} />
-          <Action label="Reset" handleClick={handleResetClick} pet={pet} />
-          <Action label="Abandon" handleClick={handleAbandonClick} pet={pet} />
+          <DisableableAction label="Heat" handleClick={handleHeatClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
+          <DisableableAction label="Cold" handleClick={handleColdClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
+          <DisableableAction label="Life" handleClick={handleLifeClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
+          <Action label="Reset" handleClick={handleResetClick} />
+          <Action label="Abandon" handleClick={handleAbandonClick} />
         </div>
       </div>
     );
@@ -333,12 +333,12 @@ function CurrentGame({name, handleAbandonClick}) {
       <Pet pet={pet} />
 
       <div className="actions_container">
-        <DisableableAction label="Feed" handleClick={handleFeedClick} pet={pet} />
-        <DisableableAction label="Water" handleClick={handleWaterClick} pet={pet} />
-        <DisableableAction label="Play" handleClick={handlePlayClick} pet={pet} />
-        <DisableableAction label="Study" handleClick={handleStudyClick} pet={pet} />
-        <Action label="Reset" handleClick={handleResetClick} pet={pet} />
-        <Action label="Abandon" handleClick={handleAbandonClick} pet={pet} />
+        <DisableableAction label="Feed" handleClick={handleFeedClick} condition={!checkIsAlive(pet) || pet.hunger == 0} />
+        <DisableableAction label="Water" handleClick={handleWaterClick} condition={!checkIsAlive(pet) || pet.thirst == 0} />
+        <DisableableAction label="Play" handleClick={handlePlayClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
+        <DisableableAction label="Study" handleClick={handleStudyClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
+        <Action label="Reset" handleClick={handleResetClick} />
+        <Action label="Abandon" handleClick={handleAbandonClick} />
       </div>
     </div>
   );
@@ -435,8 +435,8 @@ function Action({label, handleClick}) {
   );
 }
 
-function DisableableAction({label, handleClick, pet}) {
+function DisableableAction({label, handleClick, condition}) {
   return (
-    <button disabled={!checkIsAlive(pet)} onClick={handleClick}>{label}</button>
+    <button disabled={condition} onClick={handleClick}>{label}</button>
   );
 }
