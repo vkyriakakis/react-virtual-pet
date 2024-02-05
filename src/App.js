@@ -8,6 +8,9 @@ const MAX_LOVE = 10;
 const MAX_THIRST = 10;
 const MAX_COLOR = 255;
 
+// The unit of game time (in ms)
+const TICK_DURATION = 3000;
+
 // The *_INTERVAL constants concern the rate
 // at which each stat increases as time passes
 const THIRST_INTERVAL = 1;
@@ -15,8 +18,15 @@ const HUNGER_INTERVAL = 2;
 const LOVE_INTERVAL = 3;
 
 // These values concern the number of ticks that must pass for the
-// child growth stage to occur
+// baby growth stage to occur
 const MAX_EGG_TICKS = 5;
+
+// Same but for the child growth stage (the ticks are counted from t = 0)
+const MAX_BABY_TICKS = 10;
+
+// And for the rest of the stages
+const MAX_CHILD_TICKS = 20;
+const MAX_TEEN_TICKS = 35;
 
 export default function App() {
   const [curName, setCurName] = useState(localStorage.getItem("curName"));
@@ -89,13 +99,27 @@ function NameInsertionForm({handleSubmit}) {
 function parsePetOrDefault(petJson) {
   if (petJson === null) {
     return ({
+      // ticks: The age of the pet in the game time unit
       ticks: 0,
+
+      // thirst, hunger, love: Stats concerning the health of the pet
       thirst: 0,
       hunger: 0,
       love: MAX_LOVE,
+
+      // red, green, blue: Store the color of the pet
       red: 0,
       green: 0,
-      blue: 0
+      blue: 0,
+
+      // str, int; The relation between STR and INT decides the appearance
+      // of the ears, arms, and legs at each stage (only the ids are stored
+      // in the pet, not the appearance itself)
+      str: 0,
+      int: 0,
+      ears_id: 1,
+      arms_id: 1,
+      legs_id: 1
     });
   }
 
@@ -104,6 +128,17 @@ function parsePetOrDefault(petJson) {
 
 function checkIsAlive(pet) {
   return (pet.hunger < MAX_HUNGER) && (pet.thirst < MAX_THIRST) && (pet.love > 0);
+}
+
+function computeAppearanceId(pet) {
+  if (pet.int > pet.str) {
+    return 0;
+  }
+  else if (pet.int == pet.str) {
+    return 1;
+  }
+
+  return 2;
 }
 
 function CurrentGame({name, handleAbandonClick}) {
@@ -124,6 +159,10 @@ function CurrentGame({name, handleAbandonClick}) {
           let shouldUpdateHunger = false;
           let shouldUpdateLove = false;
 
+          let shouldUpdateEars = false;
+          let shouldUpdateArms = false;
+          let shouldUpdateLegs = false;
+
           if ((pet.ticks + 1) % THIRST_INTERVAL == 0) {
             shouldUpdateThirst = true;
           }        
@@ -136,11 +175,29 @@ function CurrentGame({name, handleAbandonClick}) {
             shouldUpdateLove = true;
           }
 
+          switch(pet.ticks) {
+            case MAX_BABY_TICKS:
+              shouldUpdateEars = true;
+              break;
+            case MAX_CHILD_TICKS:
+              shouldUpdateArms = true;
+              break;
+            case MAX_TEEN_TICKS:
+              shouldUpdateLegs = true;
+              break;
+            default:
+              break;
+          }
+
           setPet(prevPet => ({
+            ...prevPet,
             ticks: prevPet.ticks + 1,
             thirst: (shouldUpdateThirst && (prevPet.thirst < MAX_THIRST)) ? prevPet.thirst + 1 : prevPet.thirst,
             hunger: (shouldUpdateHunger && (prevPet.hunger < MAX_HUNGER)) ? prevPet.hunger + 1 : prevPet.hunger,
-            love: (shouldUpdateLove && (prevPet.love > 0)) ? prevPet.love - 1 : prevPet.love
+            love: (shouldUpdateLove && (prevPet.love > 0)) ? prevPet.love - 1 : prevPet.love,
+            ears_id: shouldUpdateEars ? computeAppearanceId(prevPet) : prevPet.ears_id,
+            arms_id: shouldUpdateArms ? computeAppearanceId(prevPet) : prevPet.arms_id,
+            legs_id: shouldUpdateLegs ? computeAppearanceId(prevPet) : prevPet.legs_id
           }));
         }
         // For the EGG stage always lower the love
@@ -151,7 +208,7 @@ function CurrentGame({name, handleAbandonClick}) {
             love: (prevPet.love > 0) ? prevPet.love - 1 : prevPet.love
           }));
         }
-      }, 10000);
+      }, TICK_DURATION);
 
       return () => clearTimeout(timer);
     }
@@ -177,10 +234,19 @@ function CurrentGame({name, handleAbandonClick}) {
     }));
   }
 
-  function handlePetClick() {
+  function handlePlayClick() {
     setPet(prevPet => ({
       ...prevPet,
-      love: (prevPet.love < 10) ? prevPet.love + 1 : prevPet.love
+      love: (prevPet.love < 10) ? prevPet.love + 1 : prevPet.love,
+      str: prevPet.str + 1
+    }));
+  }
+
+  function handleStudyClick() {
+    setPet(prevPet => ({
+      ...prevPet,
+      love: (prevPet.love < 10) ? prevPet.love + 1 : prevPet.love,
+      int: prevPet.int + 1
     }));
   }
 
@@ -217,7 +283,12 @@ function CurrentGame({name, handleAbandonClick}) {
       love: 10,
       red: 0,
       green: 0,
-      blue: 0
+      blue: 0,
+      str: 0,
+      int: 0,
+      ears_id: 1,
+      arms_id: 1,
+      legs_id: 1
     }));
   }
 
@@ -254,6 +325,8 @@ function CurrentGame({name, handleAbandonClick}) {
         <Status label="Hunger" value={pet.hunger} />
         <Status label="Thirst" value={pet.thirst} />
         <Status label="Love" value={pet.love} />
+        <Status label="Str" value={pet.str} />
+        <Status label="Int" value={pet.int} />
         <Status label="Age" value={pet.ticks} />
       </div>
 
@@ -262,7 +335,8 @@ function CurrentGame({name, handleAbandonClick}) {
       <div className="actions_container">
         <DisableableAction label="Feed" handleClick={handleFeedClick} pet={pet} />
         <DisableableAction label="Water" handleClick={handleWaterClick} pet={pet} />
-        <DisableableAction label="Pet" handleClick={handlePetClick} pet={pet} />
+        <DisableableAction label="Play" handleClick={handlePlayClick} pet={pet} />
+        <DisableableAction label="Study" handleClick={handleStudyClick} pet={pet} />
         <Action label="Reset" handleClick={handleResetClick} pet={pet} />
         <Action label="Abandon" handleClick={handleAbandonClick} pet={pet} />
       </div>
@@ -283,32 +357,69 @@ function Pet({pet}) {
   const LOW_THIRST = 2;
   const LOW_LOVE = 3;
 
-  let appearance = "";
+  // Depending on the corresponding id in the pet object,
+  // a particular body part is chosen
+  const ears = ["|\\ /|", "\\/ \\/", "/|\\"];
+  const left_arms = ["o-", ">~", "@="];
+  const right_arms = ["-o", "~<", "=@"];
+  const legs = ["_| |_", " 0 0 ", "_T T_"];
 
-  // Use the pet's needs to decide the depiction
+  // Use the pet's needs to decide the face
+  let face = "";
+ 
   if (pet.hunger == MAX_HUNGER || pet.thirst == MAX_THIRST || pet.love == 0) {
-    appearance = "[DIED]";
+    face = "(X_X)";
   }
   else if (pet.ticks < MAX_EGG_TICKS) {
-    appearance = "(0)";
+    face = "(0)";
   }
   else if (pet.hunger > HIGH_HUNGER || pet.thirst > HIGH_THIRST || pet.love < LOW_LOVE) {
-    appearance = "T_T";
+    face = "(T_T)";
   }
   else if (pet.hunger > MID_HUNGER || pet.thirst > MID_THIRST || pet.love < MID_LOVE) {
-    appearance = "-_-";
+    face = "(-_-)";
   }
   else if (pet.hunger > LOW_HUNGER || pet.thirst > LOW_THIRST || pet.love < HIGH_LOVE) {
-    appearance = "o_o";
+    face = "(o_o)";
   }
   else {
-    appearance = "^_^";
+    face = "(^_^)";
+  }
+
+  let pet_ears = "";
+  let pet_left_arms = "";
+  let pet_right_arms = "";
+  let pet_legs = "";
+
+  if (pet.ticks > MAX_BABY_TICKS) {
+    pet_ears = ears[pet.ears_id];
+  }
+
+  if (pet.ticks > MAX_CHILD_TICKS) {
+    pet_left_arms = left_arms[pet.arms_id];
+    pet_right_arms = right_arms[pet.arms_id];
+  }
+
+  if (pet.ticks > MAX_TEEN_TICKS) {
+    pet_legs = legs[pet.legs_id];
   }
 
   const colorStr = "rgb(" + pet.red + "," + pet.green + "," + pet.blue + ")";
 
   return (
-    <h1 style={{color: colorStr}}>{appearance}</h1>
+    <div className="appearance_container" style={{color: colorStr}}>
+      <div>
+        {pet_ears}
+      </div>
+
+      <div>
+        {pet_left_arms}{face}{pet_right_arms}
+      </div>
+      
+      <div>
+        {pet_legs}
+      </div>
+    </div>
   );
 }
 
