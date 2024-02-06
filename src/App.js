@@ -29,17 +29,22 @@ const MAX_CHILD_TICKS = 35;
 const MAX_TEEN_TICKS = 55;
 
 export default function App() {
-  const [curName, setCurName] = useState(localStorage.getItem("curName"));
+  const [curName, setCurName] = useState(JSON.parse(localStorage.getItem("curName")));
+  const [numPets, setNumPets] = useState(Object.keys(localStorage).length);
 
   function handleNameSubmit(newName) {
     setCurName(newName);
-    localStorage.setItem("curName", newName);
+    localStorage.setItem("curName", JSON.stringify(newName));
   }
 
-  function handleAbandonClick() {
+  function handleMenuClick() {
     setCurName(null);
     localStorage.setItem("curName", null);
-    localStorage.removeItem(curName);
+  }
+
+  function handlePetDelete(name) {
+    setNumPets(prevNumPets => prevNumPets - 1);
+    localStorage.removeItem(name);
   }
 
   // If the name is null, a saved game doesn't exist and
@@ -48,7 +53,8 @@ export default function App() {
     return (
       <>
         <Title />
-        <NameInsertionForm handleSubmit={handleNameSubmit} />
+        <NameInsertionForm handleNameSubmit={handleNameSubmit} />
+        <SaveSlotGrid handleNameSubmit={handleNameSubmit} handlePetDelete={handlePetDelete} />
       </>
     );
   }
@@ -56,8 +62,48 @@ export default function App() {
   return (
     <>
       <Title />
-      <CurrentGame name={curName} handleAbandonClick={handleAbandonClick} />
+      <CurrentGame name={curName} handleMenuClick={handleMenuClick} />
     </>
+  );
+}
+
+function SaveSlotGrid({handleNameSubmit, handlePetDelete}) {
+  let savedPets = [];
+
+  // Read all pets from local storage
+  Object.keys(localStorage).forEach(key => {
+    if (key != "curName") {
+      let pet = parsePetOrDefault(localStorage.getItem(key));
+      savedPets.push([key, pet]);
+    }
+  });
+
+  const saveSlots = savedPets.map(([name, pet]) => <SaveSlot 
+    key={name} 
+    name={name} 
+    pet={pet} 
+    handleNameSubmit = {handleNameSubmit}
+    handlePetDelete = {handlePetDelete}
+  />);
+
+  return (
+    <div className="save_slot_grid_container">
+      {saveSlots}
+    </div>
+  );
+}
+
+function SaveSlot({name, pet, handleNameSubmit, handlePetDelete}) {
+  return (
+    <div>
+      <div className="save_slot_container" onClick={() => handleNameSubmit(name)}>
+        <Name name={name} />
+        <Pet pet={pet} />
+        <Status label="Age" value={pet.ticks} />
+      </div>
+
+      <Action label="Delete" handleClick={() => handlePetDelete(name)} />
+    </div>
   );
 }
 
@@ -77,11 +123,11 @@ function Name({name}) {
   );
 }
 
-function NameInsertionForm({handleSubmit}) {
+function NameInsertionForm({handleNameSubmit}) {
   return (
-    <div className="vpet_container">
-      <form onSubmit={event => handleSubmit(event.target.elements.petName.value)}>
-        <label>First name:</label>
+    <div className="new_game_form_container">
+      <form onSubmit={event => handleNameSubmit(event.target.elements.petName.value)}>
+        <label>New pet name:</label>
         <input type="text" id="petName"/>
         <br />
         <input type="submit" value="Submit" />
@@ -89,12 +135,6 @@ function NameInsertionForm({handleSubmit}) {
     </div>
   );
 }
-
-/*function parseIntWithoutNaN(str, defaultNum) {
-  const num = parseInt(str);
-  return isNaN(num) ? defaultNum : num;
-}
-*/
 
 function parsePetOrDefault(petJson) {
   if (petJson === null) {
@@ -141,7 +181,7 @@ function computeAppearanceId(pet) {
   return 2;
 }
 
-function CurrentGame({name, handleAbandonClick}) {
+function CurrentGame({name, handleMenuClick}) {
   // For the first render, check the local storage for previous values,
   // and load them if they exist
   const [pet, setPet] = useState(parsePetOrDefault(localStorage.getItem(name)));
@@ -310,7 +350,7 @@ function CurrentGame({name, handleAbandonClick}) {
           <DisableableAction label="Cold" handleClick={handleColdClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
           <DisableableAction label="Life" handleClick={handleLifeClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
           <Action label="Reset" handleClick={handleResetClick} />
-          <Action label="Abandon" handleClick={handleAbandonClick} />
+          <Action label="Menu" handleClick={handleMenuClick} />
         </div>
       </div>
     );
@@ -338,7 +378,7 @@ function CurrentGame({name, handleAbandonClick}) {
         <DisableableAction label="Play" handleClick={handlePlayClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
         <DisableableAction label="Study" handleClick={handleStudyClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
         <Action label="Reset" handleClick={handleResetClick} />
-        <Action label="Abandon" handleClick={handleAbandonClick} />
+        <Action label="Menu" handleClick={handleMenuClick} />
       </div>
     </div>
   );

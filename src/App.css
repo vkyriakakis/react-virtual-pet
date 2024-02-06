@@ -7,6 +7,14 @@
 	align-items: center;
 }
 
+.new_game_form_container {
+	margin-bottom: 20px;
+
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
 .actions_container {
 	display: flex;
 	gap: 10px;
@@ -34,4 +42,34 @@
 	align-items: center;
 
 	margin-bottom: 20px;
+}
+
+.save_slot_grid_container {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	row-gap: 20px;
+	justify-items: center;
+}
+
+.save_slot_container {
+	background-color: lightgray;
+
+	height: 250px;
+	width: 250px;
+	padding: 0px 25px;
+	box-sizing: border-box;
+
+	border: 5px solid black;
+	border-radius: 10px;
+
+	cursor: pointer;
+
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+.save_slot_container:hover {
+	background-color: white;
 }
