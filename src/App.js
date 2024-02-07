@@ -2,6 +2,12 @@ import logo from './logo.svg';
 import "./App.css";
 import { useState, useEffect } from 'react';
 
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+
 // If hunger and thrist reach the maximum, the pet dies
 const MAX_HUNGER = 10;
 const MAX_LOVE = 10;
@@ -32,8 +38,14 @@ export default function App() {
   const [curName, setCurName] = useState(JSON.parse(localStorage.getItem("curName")));
   const [numPets, setNumPets] = useState(Object.keys(localStorage).length);
 
-  function handleNameSubmit(newName) {
+  function handlePetLoad(newName) {
     setCurName(newName);
+    localStorage.setItem("curName", JSON.stringify(newName));
+  }
+
+  function handlePetCreation(newName) {
+    setCurName(newName);
+    setNumPets(prevNumPets => prevNumPets + 1);
     localStorage.setItem("curName", JSON.stringify(newName));
   }
 
@@ -53,8 +65,8 @@ export default function App() {
     return (
       <>
         <Title />
-        <NameInsertionForm handleNameSubmit={handleNameSubmit} />
-        <SaveSlotGrid handleNameSubmit={handleNameSubmit} handlePetDelete={handlePetDelete} />
+        <NameInsertionForm handlePetCreation={handlePetCreation} />
+        <SaveSlotGrid handlePetLoad={handlePetLoad} handlePetDelete={handlePetDelete} />
       </>
     );
   }
@@ -67,7 +79,7 @@ export default function App() {
   );
 }
 
-function SaveSlotGrid({handleNameSubmit, handlePetDelete}) {
+function SaveSlotGrid({handlePetLoad, handlePetDelete}) {
   let savedPets = [];
 
   // Read all pets from local storage
@@ -82,7 +94,7 @@ function SaveSlotGrid({handleNameSubmit, handlePetDelete}) {
     key={name} 
     name={name} 
     pet={pet} 
-    handleNameSubmit = {handleNameSubmit}
+    handlePetLoad = {handlePetLoad}
     handlePetDelete = {handlePetDelete}
   />);
 
@@ -93,17 +105,56 @@ function SaveSlotGrid({handleNameSubmit, handlePetDelete}) {
   );
 }
 
-function SaveSlot({name, pet, handleNameSubmit, handlePetDelete}) {
+function SaveSlot({name, pet, handlePetLoad, handlePetDelete}) {
   return (
     <div>
-      <div className="save_slot_container" onClick={() => handleNameSubmit(name)}>
+      <div className="save_slot_container" onClick={() => handlePetLoad(name)}>
         <Name name={name} />
         <Pet pet={pet} />
         <Status label="Age" value={pet.ticks} />
       </div>
 
-      <Action label="Delete" handleClick={() => handlePetDelete(name)} />
+      <PetDeletionButton name={name}  handlePetDelete={handlePetDelete} />
     </div>
+  );
+}
+
+function PetDeletionButton({name, handlePetDelete}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  function handleClickOpen() {
+    setIsOpen(true);
+  }
+
+  function handleClickClose() {
+    setIsOpen(false);
+  }
+
+  const dialogText = "Do you really want to delete " + name + "?";
+
+  return (
+    <>
+      <Button variant="outlined" onClick={handleClickOpen}>
+        Delete
+      </Button>
+
+      <Dialog
+        open={isOpen}
+        onClose={handleClickClose}
+        aria-describedby="petDeleteDialogDescription"
+      >
+        <DialogContent>
+          <DialogContentText id="petDeleteDialogDescription">
+            {dialogText} 
+          </DialogContentText>
+        </DialogContent>
+
+        <DialogActions>
+            <Button onClick={() => handlePetDelete(name)}>Yes</Button>
+            <Button onClick={handleClickClose} autoFocus>No</Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }
 
@@ -123,10 +174,10 @@ function Name({name}) {
   );
 }
 
-function NameInsertionForm({handleNameSubmit}) {
+function NameInsertionForm({handlePetCreation}) {
   return (
     <div className="new_game_form_container">
-      <form onSubmit={event => handleNameSubmit(event.target.elements.petName.value)}>
+      <form onSubmit={event => handlePetCreation(event.target.elements.petName.value)}>
         <label>New pet name:</label>
         <input type="text" id="petName"/>
         <br />
