@@ -63,19 +63,26 @@ export default function App() {
   // the name insertion form should be shown
   if (curName === null) {
     return (
-      <>
-        <Title />
+      <div className="menu_container">
+        <div className="header_container">
+          <Title handleMenuClick={handleMenuClick} />
+        </div>
+        
         <NameInsertionForm handlePetCreation={handlePetCreation} />
         <SaveSlotGrid handlePetLoad={handlePetLoad} handlePetDelete={handlePetDelete} />
-      </>
+      </div>
     );
   }
 
   return (
-    <>
-      <Title />
+    <div className="game_container">
+      <div className="header_container">
+        <Title handleMenuClick={handleMenuClick} />
+        <Name name={curName} />
+      </div>
+
       <CurrentGame name={curName} handleMenuClick={handleMenuClick} />
-    </>
+    </div>
   );
 }
 
@@ -109,7 +116,7 @@ function SaveSlot({name, pet, handlePetLoad, handlePetDelete}) {
   return (
     <div>
       <div className="save_slot_container" onClick={() => handlePetLoad(name)}>
-        <Name name={name} />
+        <h2>{name}</h2>
         <Pet pet={pet} />
         <Status label="Age" value={pet.ticks} />
       </div>
@@ -158,19 +165,19 @@ function PetDeletionButton({name, handlePetDelete}) {
   );
 }
 
-function Title() {
+function Title({handleMenuClick}) {
   return (
-    <>
-      <h1>My Virtual Pet</h1>
-    </>
+    <div className="title_container" onClick={handleMenuClick}>
+      My Virtual Pet
+    </div>
   );
 }
 
 function Name({name}) {
   return (
-    <>
-      <h2>{name}</h2>
-    </>
+    <div className="name_container">
+      {name}
+    </div>
   );
 }
 
@@ -232,7 +239,7 @@ function computeAppearanceId(pet) {
   return 2;
 }
 
-function CurrentGame({name, handleMenuClick}) {
+function CurrentGame({name}) {
   // For the first render, check the local storage for previous values,
   // and load them if they exist
   const [pet, setPet] = useState(parsePetOrDefault(localStorage.getItem(name)));
@@ -386,12 +393,13 @@ function CurrentGame({name, handleMenuClick}) {
   // For the EGG stage
   if (pet.ticks < MAX_EGG_TICKS) {
     return (
-      <div className="vpet_container">
-        <Name name={name} />
-
-        <div className="status_container">
-          <Status label="Love" value={pet.love} />
+      <>
+        <div className="stats_container">
           <Status label="Age" value={pet.ticks} />
+        </div>
+
+        <div className="needs_container">
+          <Status label="Love" value={pet.love} />
         </div>
 
         <Pet pet={pet} />
@@ -401,24 +409,24 @@ function CurrentGame({name, handleMenuClick}) {
           <DisableableAction label="Cold" handleClick={handleColdClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
           <DisableableAction label="Life" handleClick={handleLifeClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
           <Action label="Reset" handleClick={handleResetClick} />
-          <Action label="Menu" handleClick={handleMenuClick} />
         </div>
-      </div>
+      </>
     );
   }
 
   // For the CHILD stage and beyond
   return (
-    <div className="vpet_container">
-      <Name name={name} />
-
-      <div className="status_container">
-        <Status label="Hunger" value={pet.hunger} />
-        <Status label="Thirst" value={pet.thirst} />
-        <Status label="Love" value={pet.love} />
+    <>
+       <div className="stats_container">
         <Status label="Str" value={pet.str} />
         <Status label="Int" value={pet.int} />
         <Status label="Age" value={pet.ticks} />
+      </div>
+
+      <div className="needs_container">
+        <Status label="Hunger" value={pet.hunger} />
+        <Status label="Thirst" value={pet.thirst} />
+        <Status label="Love" value={pet.love} />
       </div>
 
       <Pet pet={pet} />
@@ -429,9 +437,8 @@ function CurrentGame({name, handleMenuClick}) {
         <DisableableAction label="Play" handleClick={handlePlayClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
         <DisableableAction label="Study" handleClick={handleStudyClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
         <Action label="Reset" handleClick={handleResetClick} />
-        <Action label="Menu" handleClick={handleMenuClick} />
       </div>
-    </div>
+    </>
   );
 }
 
@@ -455,14 +462,22 @@ function Pet({pet}) {
   const right_arms = ["-o", "~<", "=@"];
   const legs = ["_| |_", " 0 0 ", "_T T_"];
 
+  const colorStr = "rgb(" + pet.red + "," + pet.green + "," + pet.blue + ")";
+
+  // If the pet is an egg no body parts are needed
+  if (pet.ticks < MAX_EGG_TICKS) {
+    return (
+      <div className="pet_container" style={{color: colorStr}}>
+        (0)
+      </div>
+    );
+  }
+
   // Use the pet's needs to decide the face
   let face = "";
  
   if (pet.hunger == MAX_HUNGER || pet.thirst == MAX_THIRST || pet.love == 0) {
     face = "(X_X)";
-  }
-  else if (pet.ticks < MAX_EGG_TICKS) {
-    face = "(0)";
   }
   else if (pet.hunger > HIGH_HUNGER || pet.thirst > HIGH_THIRST || pet.love < LOW_LOVE) {
     face = "(T_T)";
@@ -495,10 +510,8 @@ function Pet({pet}) {
     pet_legs = legs[pet.legs_id];
   }
 
-  const colorStr = "rgb(" + pet.red + "," + pet.green + "," + pet.blue + ")";
-
   return (
-    <div className="appearance_container" style={{color: colorStr}}>
+    <div className="pet_container" style={{color: colorStr}}>
       <div>
         {pet_ears}
       </div>
