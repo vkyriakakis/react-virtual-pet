@@ -7,10 +7,14 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 
+import StyledEngineProvider from '@mui/material/StyledEngineProvider';
+
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
 
 // If hunger and thrist reach the maximum, the pet dies
 const MAX_HUNGER = 10;
@@ -95,7 +99,7 @@ function SaveSlotGrid({handlePetLoad, handlePetDelete}) {
 
   // Read all pets from local storage
   Object.keys(localStorage).forEach(key => {
-    if (key != "curName") {
+    if (key !== "curName") {
       let pet = parsePetOrDefault(localStorage.getItem(key));
       savedPets.push([key, pet]);
     }
@@ -145,26 +149,34 @@ function PetDeletionButton({name, handlePetDelete}) {
 
   return (
     <>
-      <button className="menu_button" onClick={handleClickOpen}>
-        <DeleteForeverIcon fontSize="inherit" />
-      </button>
+      <StyledEngineProvider injectFirst>
+        <button className="menu_button" onClick={handleClickOpen}>
+          <DeleteForeverIcon fontSize="inherit" />
+        </button>
 
-      <Dialog
-        open={isOpen}
-        onClose={handleClickClose}
-        aria-describedby="petDeleteDialogDescription"
-      >
-        <DialogContent>
-          <DialogContentText id="petDeleteDialogDescription">
-            {dialogText} 
-          </DialogContentText>
-        </DialogContent>
+        <Dialog
+          className="deletion_dialog"
+          open={isOpen}
+          onClose={handleClickClose}
+          aria-describedby="petDeleteDialogDescription"
+        >
+          <DialogContent>
+            <DialogContentText id="petDeleteDialogDescription">
+              {dialogText} 
+            </DialogContentText>
+          </DialogContent>
 
-        <DialogActions>
-            <button onClick={() => handlePetDelete(name)}>Yes</button>
-            <button onClick={handleClickClose} autoFocus>No</button>
-        </DialogActions>
-      </Dialog>
+          <DialogActions>
+              <button className="menu_button" onClick={() => handlePetDelete(name)}>
+                <CheckIcon fontSize="inherit" />
+              </button>
+
+              <button className="menu_button" onClick={handleClickClose} autoFocus>
+                <CloseIcon fontSize="inherit" />
+              </button>
+          </DialogActions>
+        </Dialog>
+      </StyledEngineProvider>
     </>
   );
 }
@@ -235,7 +247,7 @@ function computeAppearanceId(pet) {
   if (pet.int > pet.str) {
     return 0;
   }
-  else if (pet.int == pet.str) {
+  else if (pet.int === pet.str) {
     return 1;
   }
 
@@ -264,15 +276,15 @@ function CurrentGame({name}) {
           let shouldUpdateArms = false;
           let shouldUpdateLegs = false;
 
-          if ((pet.ticks + 1) % THIRST_INTERVAL == 0) {
+          if ((pet.ticks + 1) % THIRST_INTERVAL === 0) {
             shouldUpdateThirst = true;
           }        
 
-          if ((pet.ticks + 1) % HUNGER_INTERVAL == 0) {
+          if ((pet.ticks + 1) % HUNGER_INTERVAL === 0) {
             shouldUpdateHunger = true;
           }
 
-          if ((pet.ticks + 1) % LOVE_INTERVAL == 0) {
+          if ((pet.ticks + 1) % LOVE_INTERVAL === 0) {
             shouldUpdateLove = true;
           }
 
@@ -429,21 +441,19 @@ function PetStage({pet, handleFeedClick, handleWaterClick, handlePlayClick, hand
       </div>
 
       <div className="needs_container">
-        <div>
-          <Need icon={<RestaurantIcon />} value={MAX_HUNGER - pet.hunger} max_value={MAX_HUNGER} />
-          <Need icon={<WaterDropIcon />} value={MAX_THIRST - pet.thirst} max_value={MAX_THIRST} />
-          <Need icon={<FavoriteIcon />} value={pet.love} max_value={MAX_LOVE} />
-        </div>
+        <Need icon={<RestaurantIcon />} value={MAX_HUNGER - pet.hunger} max_value={MAX_HUNGER} />
+        <Need icon={<WaterDropIcon />} value={MAX_THIRST - pet.thirst} max_value={MAX_THIRST} />
+        <Need icon={<FavoriteIcon />} value={pet.love} max_value={MAX_LOVE} />
       </div>
 
       <Pet pet={pet} />
 
       <div className="actions_container">
         <div className="pet_actions_container">
-          <DisableableAction label="Feed" handleClick={handleFeedClick} condition={!checkIsAlive(pet) || pet.hunger == 0} />
-          <DisableableAction label="Water" handleClick={handleWaterClick} condition={!checkIsAlive(pet) || pet.thirst == 0} />
-          <DisableableAction label="Play" handleClick={handlePlayClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
-          <DisableableAction label="Study" handleClick={handleStudyClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
+          <DisableableAction label="Feed" handleClick={handleFeedClick} condition={!checkIsAlive(pet) || pet.hunger === 0} />
+          <DisableableAction label="Water" handleClick={handleWaterClick} condition={!checkIsAlive(pet) || pet.thirst === 0} />
+          <DisableableAction label="Play" handleClick={handlePlayClick} condition={!checkIsAlive(pet) || pet.love === MAX_LOVE} />
+          <DisableableAction label="Study" handleClick={handleStudyClick} condition={!checkIsAlive(pet) || pet.love === MAX_LOVE} />
           {/*<Action label="Reset" handleClick={handleResetClick} />*/}
         </div>
       </div>
@@ -465,9 +475,9 @@ function EggStage({pet, handleHeatClick, handleColdClick, handleLifeClick}) {
       <Pet pet={pet} />
 
       <div className="actions_container">
-        <DisableableAction label="Heat" handleClick={handleHeatClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
-        <DisableableAction label="Cold" handleClick={handleColdClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
-        <DisableableAction label="Life" handleClick={handleLifeClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
+        <DisableableAction label="Heat" handleClick={handleHeatClick} condition={!checkIsAlive(pet) || pet.love === MAX_LOVE} />
+        <DisableableAction label="Cold" handleClick={handleColdClick} condition={!checkIsAlive(pet) || pet.love === MAX_LOVE} />
+        <DisableableAction label="Life" handleClick={handleLifeClick} condition={!checkIsAlive(pet) || pet.love === MAX_LOVE} />
         {/*<Action label="Reset" handleClick={handleResetClick} />*/}
       </div>
     </>
@@ -508,7 +518,7 @@ function Pet({pet}) {
   // Use the pet's needs to decide the face
   let face = "";
  
-  if (pet.hunger == MAX_HUNGER || pet.thirst == MAX_THIRST || pet.love == 0) {
+  if (pet.hunger === MAX_HUNGER || pet.thirst === MAX_THIRST || pet.love === 0) {
     face = "(X_X)";
   }
   else if (pet.hunger > HIGH_HUNGER || pet.thirst > HIGH_THIRST || pet.love < LOW_LOVE) {
