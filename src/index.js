@@ -4,7 +4,7 @@ import './index.css';
 import App from './App';
 
 import "typeface-josefin-sans";
-
+import "fontawesome-free";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

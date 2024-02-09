@@ -8,6 +8,10 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
+import WaterDropIcon from '@mui/icons-material/WaterDrop';
+
 // If hunger and thrist reach the maximum, the pet dies
 const MAX_HUNGER = 10;
 const MAX_LOVE = 10;
@@ -118,7 +122,7 @@ function SaveSlot({name, pet, handlePetLoad, handlePetDelete}) {
       <div className="save_slot_container" onClick={() => handlePetLoad(name)}>
         <h2>{name}</h2>
         <Pet pet={pet} />
-        <Status label="Age" value={pet.ticks} />
+        <Stat label="Age" value={pet.ticks} />
       </div>
 
       <PetDeletionButton name={name}  handlePetDelete={handlePetDelete} />
@@ -395,11 +399,11 @@ function CurrentGame({name}) {
     return (
       <>
         <div className="stats_container">
-          <Status label="Age" value={pet.ticks} />
+          <Stat label="Age" value={pet.ticks} />
         </div>
 
         <div className="needs_container">
-          <Status label="Love" value={pet.love} />
+          <Need icon={<FavoriteIcon />} value={pet.love} max_value={MAX_LOVE} />
         </div>
 
         <Pet pet={pet} />
@@ -417,16 +421,20 @@ function CurrentGame({name}) {
   // For the CHILD stage and beyond
   return (
     <>
-       <div className="stats_container">
-        <Status label="Str" value={pet.str} />
-        <Status label="Int" value={pet.int} />
-        <Status label="Age" value={pet.ticks} />
+      <div className="stats_container">
+        <div>
+          <Stat label="Age" value={pet.ticks} />
+          <Stat label="Strength" value={pet.str} />
+          <Stat label="Intelligence" value={pet.int} />
+        </div>
       </div>
 
       <div className="needs_container">
-        <Status label="Hunger" value={pet.hunger} />
-        <Status label="Thirst" value={pet.thirst} />
-        <Status label="Love" value={pet.love} />
+        <div>
+          <Need icon={<FavoriteIcon />} value={pet.love} max_value={MAX_LOVE} />
+          <Need icon={<RestaurantIcon />} value={MAX_HUNGER - pet.hunger} max_value={MAX_HUNGER} />
+          <Need icon={<WaterDropIcon />} value={MAX_THIRST - pet.thirst} max_value={MAX_THIRST} />
+        </div>
       </div>
 
       <Pet pet={pet} />
@@ -527,9 +535,28 @@ function Pet({pet}) {
   );
 }
 
-function Status({label, value}) {
+function Stat({label, value}) {
   return (
-    <p>{label}: {value}</p>
+    <div className="single_stat_container">
+      <div className="stat_label">{label}</div>
+      <div className="stat_value">{value}</div>
+    </div>
+  );
+}
+
+function Need({icon, value, max_value}) {
+  const widthStr = ((value / max_value) * 100) + "%";
+
+  console.log(widthStr);
+
+  return (
+    <div className="single_need_container">
+      {icon}
+
+      <div className="need_empty_progress_bar">
+        <div className="need_filled_progress_bar" style={{width: widthStr}}></div>
+      </div>
+    </div>
   );
 }
 

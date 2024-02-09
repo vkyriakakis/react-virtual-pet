@@ -11,7 +11,9 @@
 }
 
 body {
+	color: var(--text-color);
 	background-color: var(--main-bg-color);
+	font-family: Josefin Sans;
 }
 
 .menu_container, .game_container {
@@ -33,7 +35,7 @@ body {
 		"pet pet actions actions";
 
 	grid-template-rows: 80px 1fr 1fr;
-	grid-template-columns: 25% 25% 1fr 1fr;
+	grid-template-columns: 25% 25% 15% 1fr;
 
 	column-gap: 20px;
 	row-gap: 20px;
@@ -49,7 +51,7 @@ body {
 .title_container {
 	height: 80px;
 
-	color: var(--text-color);
+	
 	background-color: var(--accent-color);
 
 	font-size: 40px;
@@ -66,7 +68,6 @@ body {
 }
 
 .name_container {
-	color: var(--text-color);
 	background-color: var(--pane-bg-color);
 
 	font-size: 40px;
@@ -113,25 +114,74 @@ body {
 
 	display: flex;
 	gap: 10px;
-	flex-direction: row;
+	flex-direction: column;
 	justify-content: center;
 	align-items: center;
 
 	grid-area: needs;
-}	
+}
+
+.single_need_container {
+	margin-bottom: 10px;
+
+	display: flex;
+	flex-direction: row;
+	gap: 20px;
+}
+
+.single_need_container:last-child {
+	margin-bottom: 0px;
+}
+
+.need_label {
+	color: var(--accent-color);
+}
+
+.need_empty_progress_bar {
+	background-color: var(--main-bg-color);
+	width: 350px;
+	border-radius: 20px;
+}
+
+.need_filled_progress_bar {
+	background-color: var(--accent-color);
+	height: 24px;
+	border-radius: 20px;
+}
 
 .stats_container {
 	background-color: var(--pane-bg-color);
 
 	border-radius: 12px;
 
+	text-align: left;
+
 	display: flex;
-	gap: 10px;
-	flex-direction: row;
+	gap: 20px;
+	flex-direction: column;
 	justify-content: center;
 	align-items: center;
 
 	grid-area: stats;
+}
+
+.single_stat_container {
+	margin-bottom: 10px;
+}
+
+.single_stat_container:last-child {
+	margin-bottom: 0px;
+}
+
+.game_container .stat_label {	
+	font-size: 25px;
+}
+
+.game_container .stat_value {
+	color: var(--accent-color);
+
+	font-family: monospace;
+	font-size: 45px;
 }
 
 .pet_container {
