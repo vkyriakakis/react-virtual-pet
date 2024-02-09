@@ -2,7 +2,6 @@ import logo from './logo.svg';
 import "./App.css";
 import { useState, useEffect } from 'react';
 
-import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -11,6 +10,7 @@ import DialogContentText from '@mui/material/DialogContentText';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 
 // If hunger and thrist reach the maximum, the pet dies
 const MAX_HUNGER = 10;
@@ -145,9 +145,9 @@ function PetDeletionButton({name, handlePetDelete}) {
 
   return (
     <>
-      <Button variant="outlined" onClick={handleClickOpen}>
-        Delete
-      </Button>
+      <button className="menu_button" onClick={handleClickOpen}>
+        <DeleteForeverIcon fontSize="inherit" />
+      </button>
 
       <Dialog
         open={isOpen}
@@ -161,8 +161,8 @@ function PetDeletionButton({name, handlePetDelete}) {
         </DialogContent>
 
         <DialogActions>
-            <Button onClick={() => handlePetDelete(name)}>Yes</Button>
-            <Button onClick={handleClickClose} autoFocus>No</Button>
+            <button onClick={() => handlePetDelete(name)}>Yes</button>
+            <button onClick={handleClickClose} autoFocus>No</button>
         </DialogActions>
       </Dialog>
     </>
@@ -190,9 +190,8 @@ function NameInsertionForm({handlePetCreation}) {
     <div className="new_game_form_container">
       <form onSubmit={event => handlePetCreation(event.target.elements.petName.value)}>
         <label>New pet name:</label>
-        <input type="text" id="petName"/>
         <br />
-        <input type="submit" value="Submit" />
+        <input className="new_game_input" type="text" id="petName"/>
       </form>
     </div>
   );
@@ -210,9 +209,9 @@ function parsePetOrDefault(petJson) {
       love: MAX_LOVE,
 
       // red, green, blue: Store the color of the pet
-      red: 0,
-      green: 0,
-      blue: 0,
+      red: 80,
+      green: 80,
+      blue: 80,
 
       // str, int; The relation between STR and INT decides the appearance
       // of the ears, arms, and legs at each stage (only the ids are stored
@@ -383,9 +382,9 @@ function CurrentGame({name}) {
       thirst: 0,
       hunger: 0,
       love: 10,
-      red: 0,
-      green: 0,
-      blue: 0,
+      red: 80,
+      green: 80,
+      blue: 80,
       str: 0,
       int: 0,
       ears_id: 1,
@@ -397,28 +396,28 @@ function CurrentGame({name}) {
   // For the EGG stage
   if (pet.ticks < MAX_EGG_TICKS) {
     return (
-      <>
-        <div className="stats_container">
-          <Stat label="Age" value={pet.ticks} />
-        </div>
-
-        <div className="needs_container">
-          <Need icon={<FavoriteIcon />} value={pet.love} max_value={MAX_LOVE} />
-        </div>
-
-        <Pet pet={pet} />
-
-        <div className="actions_container">
-          <DisableableAction label="Heat" handleClick={handleHeatClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
-          <DisableableAction label="Cold" handleClick={handleColdClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
-          <DisableableAction label="Life" handleClick={handleLifeClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
-          <Action label="Reset" handleClick={handleResetClick} />
-        </div>
-      </>
+      <EggStage 
+        pet={pet} 
+        handleHeatClick={handleHeatClick} 
+        handleColdClick={handleColdClick} 
+        handleLifeClick={handleLifeClick} 
+      />
     );
   }
 
   // For the CHILD stage and beyond
+  return (
+    <PetStage
+      pet={pet}
+      handleFeedClick={handleFeedClick}
+      handleWaterClick={handleWaterClick}
+      handlePlayClick={handlePlayClick}
+      handleStudyClick={handleStudyClick}
+    />
+  );
+}
+
+function PetStage({pet, handleFeedClick, handleWaterClick, handlePlayClick, handleStudyClick}) {
   return (
     <>
       <div className="stats_container">
@@ -431,20 +430,45 @@ function CurrentGame({name}) {
 
       <div className="needs_container">
         <div>
-          <Need icon={<FavoriteIcon />} value={pet.love} max_value={MAX_LOVE} />
           <Need icon={<RestaurantIcon />} value={MAX_HUNGER - pet.hunger} max_value={MAX_HUNGER} />
           <Need icon={<WaterDropIcon />} value={MAX_THIRST - pet.thirst} max_value={MAX_THIRST} />
+          <Need icon={<FavoriteIcon />} value={pet.love} max_value={MAX_LOVE} />
         </div>
       </div>
 
       <Pet pet={pet} />
 
       <div className="actions_container">
-        <DisableableAction label="Feed" handleClick={handleFeedClick} condition={!checkIsAlive(pet) || pet.hunger == 0} />
-        <DisableableAction label="Water" handleClick={handleWaterClick} condition={!checkIsAlive(pet) || pet.thirst == 0} />
-        <DisableableAction label="Play" handleClick={handlePlayClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
-        <DisableableAction label="Study" handleClick={handleStudyClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
-        <Action label="Reset" handleClick={handleResetClick} />
+        <div className="pet_actions_container">
+          <DisableableAction label="Feed" handleClick={handleFeedClick} condition={!checkIsAlive(pet) || pet.hunger == 0} />
+          <DisableableAction label="Water" handleClick={handleWaterClick} condition={!checkIsAlive(pet) || pet.thirst == 0} />
+          <DisableableAction label="Play" handleClick={handlePlayClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
+          <DisableableAction label="Study" handleClick={handleStudyClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
+          {/*<Action label="Reset" handleClick={handleResetClick} />*/}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function EggStage({pet, handleHeatClick, handleColdClick, handleLifeClick}) {
+  return (
+    <>
+      <div className="stats_container">
+        <Stat label="Age" value={pet.ticks} />
+      </div>
+
+      <div className="needs_container">
+        <Need icon={<FavoriteIcon />} value={pet.love} max_value={MAX_LOVE} />
+      </div>
+
+      <Pet pet={pet} />
+
+      <div className="actions_container">
+        <DisableableAction label="Heat" handleClick={handleHeatClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
+        <DisableableAction label="Cold" handleClick={handleColdClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
+        <DisableableAction label="Life" handleClick={handleLifeClick} condition={!checkIsAlive(pet) || pet.love == MAX_LOVE} />
+        {/*<Action label="Reset" handleClick={handleResetClick} />*/}
       </div>
     </>
   );
@@ -505,15 +529,18 @@ function Pet({pet}) {
   let pet_right_arms = "";
   let pet_legs = "";
 
+  // The pet grows ears after it goes into the CHILD stage
   if (pet.ticks > MAX_BABY_TICKS) {
     pet_ears = ears[pet.ears_id];
   }
 
+  // In the TEENAGER stage, the pet grows arms
   if (pet.ticks > MAX_CHILD_TICKS) {
     pet_left_arms = left_arms[pet.arms_id];
     pet_right_arms = right_arms[pet.arms_id];
   }
 
+  // Finally, in the ADULT stage, it grows legs
   if (pet.ticks > MAX_TEEN_TICKS) {
     pet_legs = legs[pet.legs_id];
   }
@@ -568,6 +595,6 @@ function Action({label, handleClick}) {
 
 function DisableableAction({label, handleClick, condition}) {
   return (
-    <button disabled={condition} onClick={handleClick}>{label}</button>
+    <button className="game_button" disabled={condition} onClick={handleClick}>{label}</button>
   );
 }
