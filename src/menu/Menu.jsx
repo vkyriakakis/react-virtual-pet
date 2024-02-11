@@ -8,7 +8,7 @@ import NameInsertionForm from './NameInsertionForm';
 
 import Title from '../header/Title';
 import Pet from '../pet/Pet';
-import { parsePetOrDefault } from '../pet/petUtils';
+import { parsePetOrNull, initPet } from '../pet/petUtils';
 
 // Reads and returns all pets from local storage
 export function loader() {
@@ -16,7 +16,7 @@ export function loader() {
 
   Object.keys(localStorage).forEach(key => {
     if (key !== "curName") {
-      let pet = parsePetOrDefault(localStorage.getItem(key));
+      let pet = parsePetOrNull(localStorage.getItem(key));
       savedPets.push([key, pet]);
     }
   });
@@ -30,17 +30,18 @@ export async function action({ request }) {
   const formData = await request.formData();
   const petName = Object.fromEntries(formData).petName;
 
+  // Create the pet only if it isn't already in local storage
+  const pet = localStorage.getItem(petName);
+  if (pet === null) {
+    localStorage.setItem(petName, JSON.stringify(initPet()));
+  }
+
   return redirect(`/${petName}`);
 }
 
 export function Menu() {
   const [numPets, setNumPets] = useState(Object.keys(localStorage).length);
   const savedPets = useLoaderData();
-
-  function handlePetCreation(newName) {
-    setNumPets(prevNumPets => prevNumPets + 1);
-    localStorage.setItem("curName", JSON.stringify(newName));
-  }
 
   function handlePetDelete(name) {
     setNumPets(prevNumPets => prevNumPets - 1);
