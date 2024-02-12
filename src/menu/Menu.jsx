@@ -14,6 +14,14 @@ import { parsePetOrNull, initPet } from '../pet/petUtils';
 export function loader() {
   let savedPets = [];
 
+  // If curName in the local storage is set, redirect immediately to
+  // the page of the corresponding pet
+  let curName = localStorage.getItem("curName");
+  curName = (curName !== null) ? JSON.parse(curName) : null; 
+  if (curName !== null) {
+    return redirect("/" + curName);
+  }
+
   Object.keys(localStorage).forEach(key => {
     if (key !== "curName") {
       let pet = parsePetOrNull(localStorage.getItem(key));
@@ -32,21 +40,17 @@ export async function action({ request }) {
 
   // Create the pet only if it isn't already in local storage
   const pet = localStorage.getItem(petName);
-  if (pet === null) {
-    localStorage.setItem(petName, JSON.stringify(initPet()));
+  if (pet !== null) {
+    throw new Response("Pet Already Existed", { status: 409 });
   }
+
+  localStorage.setItem(petName, JSON.stringify(initPet()));
 
   return redirect(`/${petName}`);
 }
 
 export function Menu() {
-  const [numPets, setNumPets] = useState(Object.keys(localStorage).length);
   const savedPets = useLoaderData();
-
-  function handlePetDelete(name) {
-    setNumPets(prevNumPets => prevNumPets - 1);
-    localStorage.removeItem(name);
-  }
 
   return (
     <div className="menu_container">
@@ -55,7 +59,7 @@ export function Menu() {
       </div>
       
       <NameInsertionForm />
-      <SaveSlotGrid savedPets={savedPets} handlePetDelete={handlePetDelete} />
+      <SaveSlotGrid savedPets={savedPets} />
     </div>
   );
 }

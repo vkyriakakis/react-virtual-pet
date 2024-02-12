@@ -1,6 +1,7 @@
 import "../App.css";
 
 import { useState } from 'react';
+import { Form } from "react-router-dom";
 
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -13,7 +14,7 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 
-export default function PetDeletionButton({name, handlePetDelete}) {
+export default function PetDeletionButton({name}) {
   const [isOpen, setIsOpen] = useState(false);
 
   function handleClickOpen() {
@@ -46,9 +47,12 @@ export default function PetDeletionButton({name, handlePetDelete}) {
           </DialogContent>
 
           <DialogActions>
-              <button className="menu_button" onClick={() => handlePetDelete(name)}>
-                <CheckIcon fontSize="inherit" />
-              </button>
+              <Form method="post" action={"/" +  name + "/delete"}>
+                <input type="hidden" name="petName" value={name} />
+                <button className="menu_button" type="submit" onClick={handleClickClose}>
+                  <CheckIcon fontSize="inherit" />
+                </button>
+              </Form>
 
               <button className="menu_button" onClick={handleClickClose} autoFocus>
                 <CloseIcon fontSize="inherit" />

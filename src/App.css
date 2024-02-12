@@ -16,9 +16,41 @@ body {
 	font-family: Josefin Sans;
 }
 
-.menu_container, .game_container {
+a:link {
+  color: var(--text-color);
+}
+
+a:visited {
+	color: var(--text-color);
+}
+
+a:active {
+	color: var(--text-color);
+}
+
+.menu_container, .game_container, .error_page_container {
 	height: 100vh;
 	padding: 20px;
+}
+
+.error_message_container {
+	font-size: 40px;
+
+	display: flex;
+	gap: 30px;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+.error_pet_container { 
+	font-size: 40px;
+	font-family: monospace;
+
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
 }
 
 .menu_container {
