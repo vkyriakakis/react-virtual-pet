@@ -2,14 +2,9 @@ import "../App.css";
 
 import { useState, useEffect } from 'react';
 
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import RestaurantIcon from '@mui/icons-material/Restaurant';
-import WaterDropIcon from '@mui/icons-material/WaterDrop';
-
 import * as Constants from "../constants";
 import EggStage from './EggStage';
 import PetStage from './PetStage';
-import { parsePetOrDefault } from '../pet/petUtils';
 import { checkIsAlive } from './common';
 
 // Determines which part to use for the ears, arms etc 
@@ -59,7 +54,7 @@ export default function CurrentGame({savedPet, name}) {
             shouldUpdateLove = true;
           }
 
-          switch(pet.ticks) {
+          switch(pet.ticks + 1) {
             case Constants.MAX_BABY_TICKS:
               shouldUpdateEars = true;
               break;
@@ -101,7 +96,7 @@ export default function CurrentGame({savedPet, name}) {
   // Store to local storage after every re-render (change in the pet's state)
   useEffect(() => {
       localStorage.setItem(name, JSON.stringify(pet));
-  });
+  }, [pet]);
 
   // For the EGG stage
   if (pet.ticks < Constants.MAX_EGG_TICKS) {

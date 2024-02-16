@@ -46,18 +46,18 @@ export default function Pet({pet}) {
   let pet_legs = "";
 
   // The pet grows ears after it goes into the CHILD stage
-  if (pet.ticks > Constants.MAX_BABY_TICKS) {
+  if (pet.ticks >= Constants.MAX_BABY_TICKS) {
     pet_ears = ears[pet.ears_id];
   }
 
   // In the TEENAGER stage, the pet grows arms
-  if (pet.ticks > Constants.MAX_CHILD_TICKS) {
+  if (pet.ticks >= Constants.MAX_CHILD_TICKS) {
     pet_left_arms = left_arms[pet.arms_id];
     pet_right_arms = right_arms[pet.arms_id];
   }
 
   // Finally, in the ADULT stage, it grows legs
-  if (pet.ticks > Constants.MAX_TEEN_TICKS) {
+  if (pet.ticks >= Constants.MAX_TEEN_TICKS) {
     pet_legs = legs[pet.legs_id];
   }
 
