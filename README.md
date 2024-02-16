@@ -1,3 +1,5 @@
+# react-virtual-pet
+
 ## Features
 - You have to keep the pet alive by feeding, watering and playing with it.
 - Depending on how you raise it, it can take on many different colors and 27 different appearance combinations as it grows up.
